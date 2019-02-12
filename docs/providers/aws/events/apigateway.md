@@ -18,7 +18,7 @@ layout: Doc
     - [Example "LAMBDA-PROXY" event (default)](#example-lambda-proxy-event-default)
     - [HTTP Endpoint with Extended Options](#http-endpoint-with-extended-options)
     - [Enabling CORS](#enabling-cors)
-    - [HTTP Endpoints with `AWS_IAM` Authorizers](#http-endpoints-with-aws-iam-authorizers)
+    - [HTTP Endpoints with `AWS_IAM` Authorizers](#http-endpoints-with-aws_iam-authorizers)
     - [HTTP Endpoints with Custom Authorizers](#http-endpoints-with-custom-authorizers)
     - [Catching Exceptions In Your Lambda Function](#catching-exceptions-in-your-lambda-function)
     - [Setting API keys for your Rest API](#setting-api-keys-for-your-rest-api)
@@ -229,6 +229,37 @@ functions:
               - X-Amz-Security-Token
               - X-Amz-User-Agent
             allowCredentials: false
+```
+
+To allow multipe origins, you can use the following configuration and provide an array in the `origins` or use comma separated `origin` field:
+
+```yml
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - http:
+          path: hello
+          method: get
+          cors:
+            origins:
+              - http://example.com
+              - http://example2.com
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+```
+
+Please note that since you can't send multiple values for [Access-Control-Allow-Origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin), this configuration uses a response template to check if the request origin matches one of your provided `origins` and overrides the header with the following code:
+
+```
+#set($origin = $input.params("Origin")
+#if($origin == "http://example.com" || $origin == "http://*.amazonaws.com") #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end
 ```
 
 Configuring the `cors` property sets  [Access-Control-Allow-Origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin), [Access-Control-Allow-Headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Headers), [Access-Control-Allow-Methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Methods),[Access-Control-Allow-Credentials](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials) headers in the CORS preflight response.
@@ -738,7 +769,7 @@ There are 3 available options:
 |WHEN_NO_MATCH     |  Content-Type does not match defined template | Never                                                                   |
 |WHEN_NO_TEMPLATES |  No templates were defined                    | One or more templates defined, but Content-Type does not match          |
 
-See the [api gateway documentation](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html#integration-passthrough-behaviors) for detailed descriptions of these options.
+See the [api gateway documentation](https://docs.aws.amazon.com/apigateway/latest/developerguide/integration-passthrough-behaviors.html) for detailed descriptions of these options.
 
 **Notes:**
 
